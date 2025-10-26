@@ -9,13 +9,15 @@ def criar_pdf(imagens_com_titulos):
     pdf = FPDF()
     pdf.set_auto_page_break(auto=True, margin=15)
     
-    # Adicionar uma fonte que suporte caracteres especiais (opcional, mas recomendado)
-    # Você precisaria ter um arquivo de fonte .ttf
-    # pdf.add_font('DejaVu', '', 'DejaVuSans.ttf', uni=True)
-    # pdf.set_font('DejaVu', '', 14)
-
     for item in imagens_com_titulos:
-        titulo = item['titulo']
+        
+        # Tenta codificar o título para 'latin-1' (padrão do FPDF)
+        # Isso ajuda com acentos comuns, mas não com todos os caracteres
+        try:
+            titulo = item['titulo'].encode('latin-1', 'replace').decode('latin-1')
+        except UnicodeEncodeError:
+            titulo = item['titulo'] # Usa o original se falhar
+
         uploaded_file = item['arquivo']
         
         pdf.add_page()
@@ -46,12 +48,16 @@ def criar_pdf(imagens_com_titulos):
         # Reseta o "ponteiro" dos bytes para o início
         image_bytes.seek(0)
         
+        # Pega o tipo da imagem (jpg, png) do nome do arquivo
+        img_type = uploaded_file.type.split('/')[-1]
+
         # Adiciona a imagem ao PDF
-        # O 'name' é importante para a biblioteca fpdf
-        pdf.image(image_bytes, x=None, y=None, w=pdf_img_width, type=uploaded_file.type.split('/')[-1])
+        pdf.image(image_bytes, x=None, y=None, w=pdf_img_width, type=img_type)
 
     # Gera o PDF em memória como bytes
-    pdf_output = pdf.output(dest='S').encode('latin-1')
+    # --- ESTA É A LINHA CORRIGIDA ---
+    pdf_output = pdf.output(dest='S')
+    
     return pdf_output
 
 # --- Interface do Streamlit (Front-End) ---
@@ -89,7 +95,7 @@ if uploaded_files:
 
     # 4. Lógica de Geração e Download
     if submit_button:
-        # Verifica se todos os títulos foram preenchidos (opcional)
+        # Verifica se todos os títulos foram preenchidos
         if all(item['titulo'] for item in imagens_com_titulos):
             with st.spinner("Gerando seu PDF..."):
                 pdf_bytes = criar_pdf(imagens_com_titulos)
