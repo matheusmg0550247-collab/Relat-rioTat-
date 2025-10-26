@@ -37,28 +37,26 @@ def criar_pdf(imagens_com_titulos, numero_projeto):
     
     pdf.ln(30) # Espaço
 
-    # --- Inserir a imagem JJMS (arquivo "image_3b06e7.png") ---
-    # Certifique-se que 'image_3b06e7.png' está na mesma pasta do app.py
-    jjms_logo_path = "image_3b06e7.png" 
+    # --- Inserir a imagem LOGO (arquivo "Relatório Fotográfico.jpg") ---
+    # AJUSTE FEITO AQUI: Usando o nome do arquivo do GitHub
+    jjms_logo_path = "Relatório Fotográfico.jpg" 
     
     logo_width = 60 # Largura do logo no PDF (em mm)
-    # Calcula a posição X para centralizar o logo
     x_pos_logo = (pdf.w - logo_width) / 2
     
     try:
-        # Adiciona a imagem a partir do arquivo
+        # Adiciona a imagem a partir do arquivo no repositório
         pdf.image(jjms_logo_path, x=x_pos_logo, y=pdf.get_y(), w=logo_width)
     except FileNotFoundError:
         pdf.set_font('Arial', 'I', 10) 
         pdf.set_text_color(255, 0, 0) # Vermelho
-        pdf.cell(0, 10, "(Erro: Imagem 'image_3b06e7.png' nao encontrada)", ln=True, align='C')
+        pdf.cell(0, 10, "(Erro: Imagem 'Relatório Fotográfico.jpg' nao encontrada)", ln=True, align='C')
         pdf.set_text_color(0, 0, 0) # Reseta a cor
-    except RuntimeError as e:
-         # Erro comum se a biblioteca de imagem (PIL) não estiver 100%
+    except Exception as e:
         pdf.set_font('Arial', 'I', 10) 
-        pdf.set_text_color(255, 0, 0) # Vermelho
-        pdf.cell(0, 10, f"(Erro ao carregar imagem: {e})", ln=True, align='C')
-        pdf.set_text_color(0, 0, 0) # Reseta a cor
+        pdf.set_text_color(255, 0, 0) 
+        pdf.cell(0, 10, f"(Erro ao carregar logo: {e})", ln=True, align='C')
+        pdf.set_text_color(0, 0, 0)
 
     
     # --- Borda para a página de rosto ---
@@ -96,7 +94,7 @@ def criar_pdf(imagens_com_titulos, numero_projeto):
             pil_image = Image.open(image_bytes)
         except Exception as e:
             st.error(f"Não foi possível ler o arquivo: {uploaded_file.name}. Erro: {e}")
-            continue # Pula esta imagem e vai para a próxima
+            continue 
 
         img_width, img_height = pil_image.size
         if img_width == 0 or img_height == 0:
@@ -108,14 +106,13 @@ def criar_pdf(imagens_com_titulos, numero_projeto):
         pdf_img_max_width = pdf.w - 2 * borda_margem - 20 # Padding extra
         pdf_img_max_height = pdf.h - 2 * borda_margem - 40 # Espaço para título e margens
         
-        # Lógica para redimensionar mantendo proporção
-        if aspect_ratio > 1: # Imagem mais alta (retrato)
+        if aspect_ratio > 1: 
             pdf_img_height = pdf_img_max_height
             pdf_img_width = pdf_img_height / aspect_ratio
             if pdf_img_width > pdf_img_max_width:
                 pdf_img_width = pdf_img_max_width
                 pdf_img_height = pdf_img_width * aspect_ratio
-        else: # Imagem mais larga (paisagem) ou quadrada
+        else: 
             pdf_img_width = pdf_img_max_width
             pdf_img_height = pdf_img_width * aspect_ratio
             if pdf_img_height > pdf_img_max_height:
@@ -125,7 +122,6 @@ def criar_pdf(imagens_com_titulos, numero_projeto):
         image_bytes.seek(0)
         img_type = uploaded_file.type.split('/')[-1]
 
-        # Centraliza a imagem
         x_pos = (pdf.w - pdf_img_width) / 2
         y_pos = pdf.get_y() 
 
@@ -143,6 +139,17 @@ def criar_pdf(imagens_com_titulos, numero_projeto):
 # --- Interface do Streamlit (Front-End) ---
 
 st.set_page_config(layout="centered")
+
+# --- AJUSTE FEITO AQUI: Imagem do site "Tatá.jpg" ---
+# Certifique-se que 'Tatá.jpg' está na mesma pasta
+try:
+    st.image("Tatá.jpg", use_column_width=True)
+except FileNotFoundError:
+    st.error("Imagem 'Tatá.jpg' não encontrada. Verifique se está no repositório GitHub.")
+except Exception as e:
+    st.error(f"Não foi possível carregar a imagem 'Tatá.jpg': {e}")
+
+
 st.title("Gerador de Relatório Fotográfico 📷📄")
 
 # Campo para o Número do Projeto
@@ -181,7 +188,6 @@ if uploaded_files:
         submit_button = st.form_submit_button(label="3. Gerar PDF do Relatório")
 
     if submit_button:
-        # Garante que o número do projeto foi preenchido
         if not numero_projeto or numero_projeto == "XXXXX":
             st.error("Por favor, preencha um número de projeto válido.")
         elif all(item['titulo'] for item in imagens_com_titulos):
