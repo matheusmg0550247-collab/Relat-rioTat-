@@ -4,28 +4,25 @@ from PIL import Image
 import io
 
 # --- Função para Criar o PDF ---
+# (Esta parte não foi alterada, continua com as imagens menores)
 def criar_pdf(imagens_com_titulos, numero_projeto):
     pdf = FPDF()
     pdf.set_auto_page_break(auto=True, margin=15)
     
-    # --- Configurações de Borda ---
     borda_cor_r = 150 
     borda_cor_g = 150
     borda_cor_b = 150
     borda_espessura = 0.5 
     borda_margem = 10 
 
-    # --- Página de Rosto ---
     pdf.add_page()
     pdf.set_font('Arial', 'B', 24)
     pdf.cell(0, 30, 'RELATÓRIO FOTOGRÁFICO', ln=True, align='C')
     
-    pdf.ln(10) # Espaço
-    
+    pdf.ln(10) 
     pdf.set_font('Arial', '', 18)
     pdf.cell(0, 15, f'Projeto nº: {numero_projeto}', ln=True, align='C')
-    
-    pdf.ln(20) # Espaço
+    pdf.ln(20) 
     
     pdf.set_font('Arial', 'B', 14)
     pdf.cell(0, 10, 'Responsável Técnico:', ln=True, align='C')
@@ -34,35 +31,29 @@ def criar_pdf(imagens_com_titulos, numero_projeto):
     pdf.cell(0, 7, 'Título profissional: ENGENHEIRO CIVIL', ln=True, align='C')
     pdf.cell(0, 7, 'RNP: 1402023162', ln=True, align='C')
     pdf.cell(0, 7, 'Registro: MG0000023221D MG', ln=True, align='C')
-    
-    pdf.ln(30) # Espaço
+    pdf.ln(30) 
 
-    # --- Inserir a imagem LOGO (arquivo "Relatório Fotográfico.jpg") ---
     jjms_logo_path = "Relatório Fotográfico.jpg" 
-    
-    logo_width = 60 # Largura do logo no PDF (em mm)
+    logo_width = 60 
     x_pos_logo = (pdf.w - logo_width) / 2
     
     try:
         pdf.image(jjms_logo_path, x=x_pos_logo, y=pdf.get_y(), w=logo_width)
     except FileNotFoundError:
         pdf.set_font('Arial', 'I', 10) 
-        pdf.set_text_color(255, 0, 0) # Vermelho
+        pdf.set_text_color(255, 0, 0) 
         pdf.cell(0, 10, "(Erro: Imagem 'Relatório Fotográfico.jpg' nao encontrada)", ln=True, align='C')
-        pdf.set_text_color(0, 0, 0) # Reseta a cor
+        pdf.set_text_color(0, 0, 0) 
     except Exception as e:
         pdf.set_font('Arial', 'I', 10) 
         pdf.set_text_color(255, 0, 0) 
         pdf.cell(0, 10, f"(Erro ao carregar logo: {e})", ln=True, align='C')
         pdf.set_text_color(0, 0, 0)
 
-    # --- Borda para a página de rosto ---
     pdf.set_draw_color(borda_cor_r, borda_cor_g, borda_cor_b)
     pdf.set_line_width(borda_espessura)
     pdf.rect(borda_margem, borda_margem, pdf.w - 2 * borda_margem, pdf.h - 2 * borda_margem)
 
-
-    # --- Páginas com Fotos e Títulos ---
     for item in imagens_com_titulos:
         try:
             titulo = item['titulo'].encode('latin-1', 'replace').decode('latin-1')
@@ -73,16 +64,13 @@ def criar_pdf(imagens_com_titulos, numero_projeto):
         
         pdf.add_page()
         
-        # --- Borda para as páginas de foto ---
         pdf.set_draw_color(borda_cor_r, borda_cor_g, borda_cor_b)
         pdf.set_line_width(borda_espessura)
         pdf.rect(borda_margem, borda_margem, pdf.w - 2 * borda_margem, pdf.h - 2 * borda_margem)
         
-        # --- Posição Y inicial (logo abaixo da borda) ---
-        y_start = borda_margem + 10 # 10mm de margem superior interna
+        y_start = borda_margem + 10 
         pdf.set_y(y_start)
 
-        # --- Adiciona a Imagem (ANTES do Título) ---
         image_bytes = io.BytesIO(uploaded_file.getvalue())
         
         try:
@@ -98,22 +86,17 @@ def criar_pdf(imagens_com_titulos, numero_projeto):
             
         aspect_ratio = img_height / img_width
         
-        # --- AJUSTE RADICAL AQUI ---
-        # Definimos um 'box' máximo bem menor
-        # A imagem (paisagem ou retrato) será forçada a caber
-        # em um quadrado de 120mm x 120mm, mantendo a proporção.
-        # (Antes, os limites eram ~170mm e ~197mm)
-        pdf_img_max_width = 120 # Largura máxima fixa (em mm)
-        pdf_img_max_height = 120 # Altura máxima fixa (em mm)
+        # O tamanho reduzido para o PDF continua o mesmo
+        pdf_img_max_width = 120 
+        pdf_img_max_height = 120 
         
-        # Lógica de redimensionamento
-        if aspect_ratio > 1: # Imagem mais alta (retrato)
+        if aspect_ratio > 1: 
             pdf_img_height = pdf_img_max_height
             pdf_img_width = pdf_img_height / aspect_ratio
             if pdf_img_width > pdf_img_max_width:
                 pdf_img_width = pdf_img_max_width
                 pdf_img_height = pdf_img_width * aspect_ratio
-        else: # Imagem mais larga (paisagem) ou quadrada
+        else: 
             pdf_img_width = pdf_img_max_width
             pdf_img_height = pdf_img_width * aspect_ratio
             if pdf_img_height > pdf_img_max_height:
@@ -123,21 +106,13 @@ def criar_pdf(imagens_com_titulos, numero_projeto):
         image_bytes.seek(0)
         img_type = uploaded_file.type.split('/')[-1]
 
-        # Centraliza a imagem
         x_pos = (pdf.w - pdf_img_width) / 2
-        
-        # Desenha a imagem na posição Y inicial
         pdf.image(image_bytes, x=x_pos, y=y_start, w=pdf_img_width, type=img_type)
-
-        # --- Adiciona o Título (DEPOIS da Imagem) ---
-        # Define a posição Y para abaixo da imagem + 5mm de espaço
+ 
         pdf.set_y(y_start + pdf_img_height + 5) 
-        
         pdf.set_font('Arial', 'B', 14)
-        # Centraliza o texto
         pdf.cell(0, 10, titulo, ln=True, align='C')
     
-    # --- Geração final do PDF ---
     try:
         pdf_bytes = pdf.output(dest='S')
         pdf_file_object = io.BytesIO(pdf_bytes)
@@ -150,8 +125,10 @@ def criar_pdf(imagens_com_titulos, numero_projeto):
 
 st.set_page_config(layout="centered")
 
+# --- AJUSTE FEITO AQUI ---
+# Removido 'use_container_width=True' e setado 'width=400'
 try:
-    st.image("Tatá.jpg", use_container_width=True)
+    st.image("Tatá.jpg", width=400) 
 except FileNotFoundError:
     st.error("Imagem 'Tatá.jpg' não encontrada. Verifique se está no repositório GitHub.")
 except Exception as e:
@@ -160,10 +137,8 @@ except Exception as e:
 
 st.title("Gerador de Relatório Fotográfico 📷📄")
 
-# Campo para o Número do Projeto
 numero_projeto = st.text_input("Número do Projeto", value="XXXXX", help="Informe o número do projeto para a página de rosto.")
 
-# Upload das fotos
 uploaded_files = st.file_uploader(
     "1. Escolha suas fotos",
     type=["jpg", "jpeg", "png"],
