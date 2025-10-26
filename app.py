@@ -98,12 +98,13 @@ def criar_pdf(imagens_com_titulos, numero_projeto):
             
         aspect_ratio = img_height / img_width
         
-        pdf_img_max_width = pdf.w - 2 * borda_margem - 20 # Padding extra
-        
-        # --- AJUSTE AQUI ---
-        # Diminuí a altura máxima para imagens 'retrato' não ficarem tão grandes
-        # Antes era -40, agora -80 (dando mais 40mm de respiro)
-        pdf_img_max_height = pdf.h - 2 * borda_margem - 80 
+        # --- AJUSTE RADICAL AQUI ---
+        # Definimos um 'box' máximo bem menor
+        # A imagem (paisagem ou retrato) será forçada a caber
+        # em um quadrado de 120mm x 120mm, mantendo a proporção.
+        # (Antes, os limites eram ~170mm e ~197mm)
+        pdf_img_max_width = 120 # Largura máxima fixa (em mm)
+        pdf_img_max_height = 120 # Altura máxima fixa (em mm)
         
         # Lógica de redimensionamento
         if aspect_ratio > 1: # Imagem mais alta (retrato)
@@ -149,9 +150,6 @@ def criar_pdf(imagens_com_titulos, numero_projeto):
 
 st.set_page_config(layout="centered")
 
-# --- AJUSTE FEITO AQUI ---
-# Troquei 'use_column_width=True' (antigo) por 'use_container_width=True' (novo)
-# Isso corrige o aviso amarelo e deve ajustar a imagem.
 try:
     st.image("Tatá.jpg", use_container_width=True)
 except FileNotFoundError:
