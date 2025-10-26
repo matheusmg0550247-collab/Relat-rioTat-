@@ -38,14 +38,12 @@ def criar_pdf(imagens_com_titulos, numero_projeto):
     pdf.ln(30) # Espaço
 
     # --- Inserir a imagem LOGO (arquivo "Relatório Fotográfico.jpg") ---
-    # AJUSTE FEITO AQUI: Usando o nome do arquivo do GitHub
     jjms_logo_path = "Relatório Fotográfico.jpg" 
     
     logo_width = 60 # Largura do logo no PDF (em mm)
     x_pos_logo = (pdf.w - logo_width) / 2
     
     try:
-        # Adiciona a imagem a partir do arquivo no repositório
         pdf.image(jjms_logo_path, x=x_pos_logo, y=pdf.get_y(), w=logo_width)
     except FileNotFoundError:
         pdf.set_font('Arial', 'I', 10) 
@@ -58,7 +56,6 @@ def criar_pdf(imagens_com_titulos, numero_projeto):
         pdf.cell(0, 10, f"(Erro ao carregar logo: {e})", ln=True, align='C')
         pdf.set_text_color(0, 0, 0)
 
-    
     # --- Borda para a página de rosto ---
     pdf.set_draw_color(borda_cor_r, borda_cor_g, borda_cor_b)
     pdf.set_line_width(borda_espessura)
@@ -81,13 +78,11 @@ def criar_pdf(imagens_com_titulos, numero_projeto):
         pdf.set_line_width(borda_espessura)
         pdf.rect(borda_margem, borda_margem, pdf.w - 2 * borda_margem, pdf.h - 2 * borda_margem)
         
-        # --- Adiciona o Título (ajustado para a borda) ---
-        pdf.set_font('Arial', 'B', 14)
-        pdf.set_xy(borda_margem + 5, borda_margem + 5) 
-        pdf.cell(pdf.w - 2 * borda_margem - 10, 10, titulo, ln=True, align='C') 
-        pdf.ln(5) # Pequeno espaço
+        # --- Posição Y inicial (logo abaixo da borda) ---
+        y_start = borda_margem + 10 # 10mm de margem superior interna
+        pdf.set_y(y_start)
 
-        # --- Adiciona a Imagem (ajustado para a borda e título) ---
+        # --- Adiciona a Imagem (ANTES do Título) ---
         image_bytes = io.BytesIO(uploaded_file.getvalue())
         
         try:
@@ -104,15 +99,20 @@ def criar_pdf(imagens_com_titulos, numero_projeto):
         aspect_ratio = img_height / img_width
         
         pdf_img_max_width = pdf.w - 2 * borda_margem - 20 # Padding extra
-        pdf_img_max_height = pdf.h - 2 * borda_margem - 40 # Espaço para título e margens
         
-        if aspect_ratio > 1: 
+        # --- AJUSTE AQUI ---
+        # Diminuí a altura máxima para imagens 'retrato' não ficarem tão grandes
+        # Antes era -40, agora -80 (dando mais 40mm de respiro)
+        pdf_img_max_height = pdf.h - 2 * borda_margem - 80 
+        
+        # Lógica de redimensionamento
+        if aspect_ratio > 1: # Imagem mais alta (retrato)
             pdf_img_height = pdf_img_max_height
             pdf_img_width = pdf_img_height / aspect_ratio
             if pdf_img_width > pdf_img_max_width:
                 pdf_img_width = pdf_img_max_width
                 pdf_img_height = pdf_img_width * aspect_ratio
-        else: 
+        else: # Imagem mais larga (paisagem) ou quadrada
             pdf_img_width = pdf_img_max_width
             pdf_img_height = pdf_img_width * aspect_ratio
             if pdf_img_height > pdf_img_max_height:
@@ -122,10 +122,19 @@ def criar_pdf(imagens_com_titulos, numero_projeto):
         image_bytes.seek(0)
         img_type = uploaded_file.type.split('/')[-1]
 
+        # Centraliza a imagem
         x_pos = (pdf.w - pdf_img_width) / 2
-        y_pos = pdf.get_y() 
+        
+        # Desenha a imagem na posição Y inicial
+        pdf.image(image_bytes, x=x_pos, y=y_start, w=pdf_img_width, type=img_type)
 
-        pdf.image(image_bytes, x=x_pos, y=y_pos, w=pdf_img_width, type=img_type)
+        # --- Adiciona o Título (DEPOIS da Imagem) ---
+        # Define a posição Y para abaixo da imagem + 5mm de espaço
+        pdf.set_y(y_start + pdf_img_height + 5) 
+        
+        pdf.set_font('Arial', 'B', 14)
+        # Centraliza o texto
+        pdf.cell(0, 10, titulo, ln=True, align='C')
     
     # --- Geração final do PDF ---
     try:
@@ -140,10 +149,11 @@ def criar_pdf(imagens_com_titulos, numero_projeto):
 
 st.set_page_config(layout="centered")
 
-# --- AJUSTE FEITO AQUI: Imagem do site "Tatá.jpg" ---
-# Certifique-se que 'Tatá.jpg' está na mesma pasta
+# --- AJUSTE FEITO AQUI ---
+# Troquei 'use_column_width=True' (antigo) por 'use_container_width=True' (novo)
+# Isso corrige o aviso amarelo e deve ajustar a imagem.
 try:
-    st.image("Tatá.jpg", use_column_width=True)
+    st.image("Tatá.jpg", use_container_width=True)
 except FileNotFoundError:
     st.error("Imagem 'Tatá.jpg' não encontrada. Verifique se está no repositório GitHub.")
 except Exception as e:
